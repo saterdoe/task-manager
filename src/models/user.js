@@ -24,12 +24,12 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        trim: true,
         minlength: 7,
+        trim: true,
         validate(value) {
             if (value.toLowerCase().includes('password')) {
                 throw new Error('Password cannot contain "password"')
-            } 
+            }
         }
     },
     age: {
@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
         default: 0,
         validate(value) {
             if (value < 0) {
-                throw new Error('Age must be a positive number') 
+                throw new Error('Age must be a postive number')
             }
         }
     },
@@ -48,6 +48,22 @@ const userSchema = new mongoose.Schema({
         }
     }]
 })
+
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'owner'
+})
+
+userSchema.methods.toJSON = function () {
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
 
 userSchema.methods.generateAuthToken = async function () {
     const user = this
@@ -75,7 +91,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
     return user
 }
 
-//Hash the plain text password before saving
+// Hash the plain text password before saving
 userSchema.pre('save', async function (next) {
     const user = this
 
